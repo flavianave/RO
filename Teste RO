@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reconhecimento do Objeto</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f4f4;
+    }
+
+    #container {
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 20px;
+    }
+
+    .tecla {
+        display: inline-block;
+        width: 100px;
+        height: 100px;
+        line-height: 100px;
+        text-align: center;
+        margin: 10px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 10px;
+    }
+
+    #tecla1 {
+        background-color: #ffcc00; /* amarelo */
+    }
+
+    #tecla2 {
+        background-color: #3399ff; /* azul */
+    }
+
+    #tecla3 {
+        background-color: #ff6666; /* vermelho */
+    }
+
+    .cronometro {
+        margin-bottom: 10px;
+    }
+
+    #contagemTeclas {
+        margin-top: 30px;
+    }
+
+    .contagemTecla {
+        display: inline-block;
+        margin: 5px;
+        padding: 5px 10px;
+        background-color: #ccc;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+
+<div id="container">
+    <h1>Reconhecimento do Objeto</h1>
+
+    <div class="tecla" id="tecla1">Tecla 1</div>
+    <div class="tecla" id="tecla2">Tecla 2</div>
+    <div class="tecla" id="tecla3">Tecla 3</div>
+
+    <div>
+        <button onclick="iniciarCronometro(1)">Iniciar Cronômetro 1 (Tecla 1)</button>
+        <button onclick="iniciarCronometro(2)">Iniciar Cronômetro 2 (Tecla 2)</button>
+        <button onclick="iniciarCronometro(3)">Iniciar Cronômetro 3 (Tecla 3)</button>
+    </div>
+
+    <div id="cronometro1" class="cronometro"></div>
+    <div id="cronometro2" class="cronometro"></div>
+    <div id="cronometro3" class="cronometro"></div>
+
+    <div id="cronometrosAtivos">
+        <p>Tecla 1: <span id="tecla1Tempo">0 milissegundos</span></p>
+        <p>Tecla 2: <span id="tecla2Tempo">0 milissegundos</span></p>
+        <p>Tecla 3: <span id="tecla3Tempo">0 milissegundos</span></p>
+        <p>Total do Teste: <span id="totalTempo">0 milissegundos</span></p>
+    </div>
+
+    <div id="contagemTeclas">
+        <p>Contagem de Teclas Pressionadas:</p>
+        <div id="contagemTecla1" class="contagemTecla">Tecla 1: 0</div>
+        <div id="contagemTecla2" class="contagemTecla">Tecla 2: 0</div>
+        <div id="contagemTecla3" class="contagemTecla">Tecla 3: 0</div>
+    </div>
+
+    <button onclick="gerarPlanilha()">Salvar para Excel</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.2/xlsx.full.min.js"></script>
+<script>
+    var cronometros = {
+        1: {inicio: 0, tempoDecorrido: 0, intervalId: null, contador: 0},
+        2: {inicio: 0, tempoDecorrido: 0, intervalId: null, contador: 0},
+        3: {inicio: 0, tempoDecorrido: 0, intervalId: null, contador: 0}
+    };
+
+    function iniciarCronometro(numeroCronometro) {
+        for (var key in cronometros) {
+            if (cronometros[key].intervalId !== null && key != numeroCronometro) {
+                clearInterval(cronometros[key].intervalId);
+                document.getElementById('cronometro' + key).textContent = '';
+            }
+        }
+
+        if (cronometros[numeroCronometro].intervalId) {
+            clearInterval(cronometros[numeroCronometro].intervalId);
+        }
+
+        var inicio = performance.now() - cronometros[numeroCronometro].tempoDecorrido;
+        cronometros[numeroCronometro].inicio = inicio;
+
+        var cronometro = document.getElementById('cronometro' + numeroCronometro);
+        
+        function atualizarCronometro() {
+            var tempoDecorrido = Math.floor((performance.now() - inicio));
+            cronometro.textContent = 'Cronômetro ' + numeroCronometro + ': ' + tempoDecorrido + ' milissegundos';
+            cronometros[numeroCronometro].tempoDecorrido = tempoDecorrido;
+            document.getElementById('tecla' + numeroCronometro + 'Tempo').textContent = tempoDecorrido + ' milissegundos';
+
+            // Atualiza o tempo total do teste
+            var totalTempo = cronometros[1].tempoDecorrido + cronometros[2].tempoDecorrido + cronometros[3].tempoDecorrido;
+            document.getElementById('totalTempo').textContent = totalTempo + ' milissegundos';
+        }
+        
+        cronometros[numeroCronometro].intervalId = setInterval(atualizarCronometro, 1);
+        cronometros[numeroCronometro].contador++;
+        atualizarContagemTecla(numeroCronometro);
+    }
+
+    function atualizarContagemTecla(numeroCronometro) {
+        var contagemTeclaElement = document.getElementById('contagemTecla' + numeroCronometro);
+        contagemTeclaElement.textContent = 'Tecla ' + numeroCronometro + ': ' + cronometros[numeroCronometro].contador;
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === '1') {
+            iniciarCronometro(1);
+        } else if (event.key === '2') {
+            iniciarCronometro(2);
+        } else if (event.key === '3') {
+            iniciarCronometro(3);
+        } else if (event.key === 'Escape') {
+            reiniciarTudo();
+        }
+    });
+
+    function reiniciarTudo() {
+        for (var key in cronometros) {
+            clearInterval(cronometros[key].intervalId);
+            cronometros[key].tempoDecorrido = 0;
+            cronometros[key].contador = 0;
+            document.getElementById('cronometro' + key).textContent = '';
+            document.getElementById('tecla' + key + 'Tempo').textContent = '0 milissegundos';
+            document.getElementById('contagemTecla' + key).textContent = 'Tecla ' + key + ': 0';
+        }
+        document.getElementById('totalTempo').textContent = '0 milissegundos';
+    }
+
+    function gerarPlanilha() {
+        var data = [
+            ["Tecla", "Tempo (milissegundos)", "Contagem"],
+            ["Tecla 1", cronometros[1].tempoDecorrido, cronometros[1].contador],
+            ["Tecla 2", cronometros[2].tempoDecorrido, cronometros[2].contador],
+            ["Tecla 3", cronometros[3].tempoDecorrido, cronometros[3].contador],
+            ["Total", cronometros[1].tempoDecorrido + cronometros[2].tempoDecorrido + cronometros[3].tempoDecorrido, ""]
+        ];
+
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, "Dados");
+
+        /* Salvar o arquivo */
+        XLSX.writeFile(wb, 'dados.xlsx');
+    }
+</script>
+
+</body>
+</html>
